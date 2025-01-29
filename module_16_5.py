@@ -3,6 +3,7 @@ from fastapi import FastAPI, Path, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+from typing import Annotated
 
 # Создаем экземпляр приложения FastAPI
 app = FastAPI(swagger_ui_parameters={"tryItOutEnabled": True}, debug=True)
@@ -56,10 +57,11 @@ async def update_user(user_id: int, username: str = Path(min_length=5, max_lengt
         raise HTTPException(status_code=404, detail="User was not found")
 
 
-@app.delete("/user/{user_id}")
-async def delete_user(user_id: str = Path(min_length=1, max_length=1000, description='Enter User ID')) -> str:
-    try:
-        users.pop(user_id)
-        return f"User id = {user_id} deleted"
-    except IndexError:
-        raise HTTPException(status_code=404, detail="User not found")
+@app.delete('/user/{user_id}')
+async def delete_user(
+        user_id: Annotated[int, Path(ge=1, le=100, description='Enter User ID', example='1')]):
+    for user in users:
+        if user.id == user_id:
+            users.remove(user)
+            return user
+    raise HTTPException(status_code=404, detail='User was not found')
